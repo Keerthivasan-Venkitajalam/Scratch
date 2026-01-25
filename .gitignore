@@ -1,0 +1,9 @@
+# Build and IDE
+feedhandler/build/
+*.o
+*.obj
+*.exe
+.DS_Store
+
+# VSCode
+.vscode/
