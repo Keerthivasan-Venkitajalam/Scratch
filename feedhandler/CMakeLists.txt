@@ -16,7 +16,10 @@ if(FEED_ASAN)
 	add_link_options(-fsanitize=address)
 endif()
 
-add_executable(feedhandler src/main.cpp)
+add_executable(feedhandler 
+    src/main.cpp
+    src/net/tcp_client.cpp
+)
 
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
