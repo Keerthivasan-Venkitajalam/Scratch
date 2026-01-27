@@ -19,6 +19,7 @@ endif()
 add_executable(feedhandler 
     src/main.cpp
     src/net/tcp_client.cpp
+    src/net/event_loop.cpp
 )
 
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
