@@ -4,37 +4,52 @@
 #include <unistd.h>
 #include "net/tcp_client.hpp"
 #include "net/event_loop.hpp"
+#include "net/receive_buffer.hpp"
+#include "net/websocket_client.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
     std::cout << "FeedHandler Boot OK" << std::endl;
     
-    feedhandler::net::TcpClient client;
+    // Day 4: Receive Buffer with Fragmentation Handling
+    std::cout << "\n=== Day 4: Receive Buffer Demo ===" << std::endl;
+    {
+        feedhandler::net::ReceiveBuffer buf;
+        
+        // Simulate fragmented TCP messages
+        const char* msg1 = "Hello,";
+        const char* msg2 = " World!";
+        
+        size_t w1 = buf.write(msg1, strlen(msg1));
+        size_t w2 = buf.write(msg2, strlen(msg2));
+        
+        std::cout << "Written " << w1 << " bytes, then " << w2 << " bytes" << std::endl;
+        std::cout << "Buffer has " << buf.readable_bytes() << " bytes readable" << std::endl;
+        std::cout << "Data: " << std::string(buf.read_ptr(), buf.readable_bytes()) << std::endl;
+        
+        buf.consume(13);
+        std::cout << "After consuming 13 bytes: " << buf.readable_bytes() << " bytes remain" << std::endl;
+    }
     
-    // Test connection to localhost:8080
-    if (client.connect("localhost", 8080)) {
-        std::cout << "Connected to server" << std::endl;
+    // Day 5: Connect to Real Feed
+    std::cout << "\n=== Day 5: WebSocket Feed Connection Demo ===" << std::endl;
+    
+    if (argc > 1 && std::string(argv[1]) == "--feed") {
+        feedhandler::net::WebSocketClient ws_client;
         
-        // Set socket to non-blocking mode (Day 3)
-        std::cout << "Socket set to non-blocking mode" << std::endl;
-        
-        // Create event loop (Day 3)
-        feedhandler::net::EventLoop loop;
-        
-        std::cout << "Enter messages to send (type 'quit' to exit):" << std::endl;
-        std::cout << "Program will not block on recv() — demonstrates non-blocking with select()" << std::endl;
-        
-        std::string input;
-        while (std::getline(std::cin, input) && input != "quit") {
-            if (client.send(input + "\n")) {
-                // Use non-blocking receive
-                std::string response = client.recv();
-                if (!response.empty()) {
-                    std::cout << "Received: " << response;
-                }
-            }
+        // Try to connect to Binance (requires HTTPS/WSS, may fail without proper setup)
+        std::cout << "Attempting to connect to Binance stream..." << std::endl;
+        if (ws_client.connect_to_feed("/ws/btcusdt@trade", "stream.binance.com", 9443)) {
+            std::cout << "Connected successfully" << std::endl;
+            // ws_client.send_handshake();  // Would need SSL/TLS support
+        } else {
+            std::cout << "Connection failed (expected - requires SSL/TLS setup)" << std::endl;
+            std::cout << "Binance WebSocket at: wss://stream.binance.com:9443/ws/btcusdt@trade" << std::endl;
         }
     } else {
-        std::cout << "Failed to connect. Make sure to run 'nc -l 8080' in another terminal." << std::endl;
+        std::cout << "Run with --feed flag to attempt live feed connection" << std::endl;
+        std::cout << "Example feed endpoints:" << std::endl;
+        std::cout << "  Binance:  wss://stream.binance.com:9443/ws/btcusdt@trade" << std::endl;
+        std::cout << "  Coinbase: wss://ws-feed.exchange.coinbase.com" << std::endl;
     }
     
     return 0;
