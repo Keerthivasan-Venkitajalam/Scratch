@@ -9,9 +9,16 @@
 class Solution {
 public:
     void reverseString(std::vector<char>& s) {
-        // TODO: Implement in-place string reversal
+        int left = 0;
+        int right = s.size() - 1;
+        while (left < right) {
+            std::swap(s[left], s[right]);
+            left++;
+            right--;
+        }
     }
 };
+
 
 // Test cases:
 // Input: s = ["h","e","l","l","o"]
