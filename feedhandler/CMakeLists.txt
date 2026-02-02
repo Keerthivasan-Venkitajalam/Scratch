@@ -24,7 +24,15 @@ add_executable(feedhandler
     src/net/websocket_client.cpp
 )
 
+# Add parser benchmark executable
+add_executable(parser_benchmark
+    src/parser_benchmark.cpp
+    src/parser/naive_fix_parser.cpp
+)
+
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(parser_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(feedhandler PRIVATE -Wall -Wextra -Werror)
+target_compile_options(parser_benchmark PRIVATE -Wall -Wextra -Werror)
 
