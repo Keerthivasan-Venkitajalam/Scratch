@@ -28,6 +28,7 @@ add_executable(feedhandler
 add_executable(parser_benchmark
     src/parser_benchmark.cpp
     src/parser/naive_fix_parser.cpp
+    src/parser/stringview_fix_parser.cpp
 )
 
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
