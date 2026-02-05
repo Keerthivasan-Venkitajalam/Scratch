@@ -1,4 +1,5 @@
 #include "parser/stringview_fix_parser.hpp"
+#include "parser/fast_number_parser.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -27,18 +28,17 @@ common::Tick StringViewFixParser::parse_message(std::string_view message) {
     
     // Tag 44: Price
     if (const Field* field = find_field(fields, field_count, 44)) {
-        double price_double = parse_double(field->value);
-        tick.price = common::double_to_price(price_double);
+        tick.price = FastNumberParser::fast_atof_fixed(field->value);
     }
     
     // Tag 38: OrderQty (Quantity)
     if (const Field* field = find_field(fields, field_count, 38)) {
-        tick.qty = parse_int(field->value);
+        tick.qty = FastNumberParser::fast_atoi(field->value);
     }
     
     // Tag 54: Side
     if (const Field* field = find_field(fields, field_count, 54)) {
-        int side_value = parse_int(field->value);
+        int side_value = FastNumberParser::fast_atoi(field->value);
         tick.side = common::fix_side_to_char(side_value);
     }
     
@@ -138,7 +138,7 @@ size_t StringViewFixParser::extract_fields(std::string_view message, Field* fiel
                 std::string_view value = field.substr(eq_pos + 1);
                 
                 // Parse tag
-                int tag = parse_int(tag_str);
+                int tag = FastNumberParser::fast_atoi(tag_str);
                 if (tag > 0) {
                     fields[field_count].tag = tag;
                     fields[field_count].value = value;
