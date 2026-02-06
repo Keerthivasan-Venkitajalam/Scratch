@@ -29,11 +29,19 @@ add_executable(parser_benchmark
     src/parser_benchmark.cpp
     src/parser/naive_fix_parser.cpp
     src/parser/stringview_fix_parser.cpp
+    src/parser/optimized_fix_parser.cpp
+)
+
+# Add fast number parser test executable
+add_executable(test_fast_number_parser
+    src/test_fast_number_parser.cpp
 )
 
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(parser_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(test_fast_number_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(feedhandler PRIVATE -Wall -Wextra -Werror)
 target_compile_options(parser_benchmark PRIVATE -Wall -Wextra -Werror)
+target_compile_options(test_fast_number_parser PRIVATE -Wall -Wextra -Werror)
 
