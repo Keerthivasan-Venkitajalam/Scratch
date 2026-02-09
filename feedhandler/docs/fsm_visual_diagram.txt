@@ -1,0 +1,295 @@
+FIX PARSER FINITE STATE MACHINE - VISUAL DIAGRAM
+================================================
+
+LEGEND:
+  ┌─────┐  = State
+  ──────>  = Transition
+  [cond]   = Condition
+  {action} = Action performed
+
+
+MAIN STATE FLOW:
+================
+
+                                    ┌──────────────────────────────────────┐
+                                    │                                      │
+                                    │  [end of message / tag 10]           │
+                                    │                                      │
+                                    ▼                                      │
+    ┌───────────┐          ┌─────────────┐                                │
+    │           │  [any]   │             │                                │
+    │   START   │─────────>│  WAIT_TAG   │<───────────────────┐           │
+    │           │          │             │                    │           │
+    └───────────┘          └─────────────┘                    │           │
+         ▲                        │                           │           │
+         │                        │ [digit]                   │           │
+         │                        │ {start tag}               │           │
+         │                        ▼                           │           │
+         │                 ┌─────────────┐                    │           │
+         │                 │             │                    │           │
+         │                 │  READ_TAG   │                    │           │
+         │                 │             │                    │           │
+         │                 └─────────────┘                    │           │
+         │                        │                           │           │
+         │                        │ ['=']                     │           │
+         │                        │ {tag complete}            │           │
+         │                        ▼                           │           │
+         │                 ┌─────────────┐                    │           │
+         │                 │             │                    │           │
+         │                 │ WAIT_VALUE  │                    │           │
+         │                 │             │                    │           │
+         │                 └─────────────┘                    │           │
+         │                        │                           │           │
+         │                        │ [any char]                │           │
+         │                        │ {mark value start}        │           │
+         │                        ▼                           │           │
+         │                 ┌─────────────┐                    │           │
+         │                 │             │                    │           │
+         │                 │ READ_VALUE  │                    │           │
+         │                 │             │                    │           │
+         │                 └─────────────┘                    │           │
+         │                        │                           │           │
+         │                        │ [SOH / '|']               │           │
+         │                        │ {value complete}          │           │
+         │                        ▼                           │           │
+         │                 ┌─────────────┐                    │           │
+         │                 │             │  [more fields]     │           │
+         │                 │    DELIM    │────────────────────┘           │
+         │                 │             │                                │
+         │                 └─────────────┘                                │
+         │                        │                                       │
+         │                        │ [tag == 10]                           │
+         │                        │ {message complete}                    │
+         │                        ▼                                       │
+         │                 ┌─────────────┐                                │
+         │                 │             │                                │
+         │                 │  COMPLETE   │────────────────────────────────┘
+         │                 │             │
+         │                 └─────────────┘
+         │                        │
+         │                        │ {create Tick}
+         │                        │ {reset state}
+         └────────────────────────┘
+
+
+DETAILED STATE TRANSITIONS:
+===========================
+
+WAIT_TAG State:
+--------------
+    ┌─────────────┐
+    │  WAIT_TAG   │
+    └─────────────┘
+         │  │  │
+         │  │  └──[SOH]──────────┐ (skip empty field)
+         │  │                    │
+         │  └──[EOF]──────> SUSPEND (resume later)
+         │
+         └──[digit]────────────> READ_TAG
+
+
+READ_TAG State:
+--------------
+    ┌─────────────┐
+    │  READ_TAG   │
+    └─────────────┘
+         │  │  │  │
+         │  │  │  └──[invalid]──> ERROR
+         │  │  │
+         │  │  └──[EOF]──────> SUSPEND (resume later)
+         │  │
+         │  └──[digit]──────────┐ (accumulate)
+         │                      │
+         │                      ▼
+         │              {tag = tag * 10 + digit}
+         │                      │
+         │                      └──> READ_TAG
+         │
+         └──['=']──────────────> WAIT_VALUE
+
+
+READ_VALUE State:
+----------------
+    ┌─────────────┐
+    │ READ_VALUE  │
+    └─────────────┘
+         │  │  │
+         │  │  └──[EOF]──────> SUSPEND (resume later)
+         │  │
+         │  └──[any except SOH]──┐ (continue)
+         │                       │
+         │                       ▼
+         │               {value_length++}
+         │                       │
+         │                       └──> READ_VALUE
+         │
+         └──[SOH / '|']────────> DELIM
+
+
+DELIM State:
+-----------
+    ┌─────────────┐
+    │    DELIM    │
+    └─────────────┘
+         │  │
+         │  │  {store_field(tag, value)}
+         │  │
+         │  └──[tag != 10]──────> WAIT_TAG (next field)
+         │
+         └──[tag == 10]──────────> COMPLETE (message done)
+
+
+ERROR RECOVERY:
+==============
+
+    ┌─────────────┐
+    │    ERROR    │
+    └─────────────┘
+         │
+         │ {log error}
+         │
+         ▼
+    ┌─────────────────────────┐
+    │  Scan for "8=FIX"       │
+    │  (message start marker) │
+    └─────────────────────────┘
+         │
+         │ [found]
+         │
+         ▼
+    ┌─────────────┐
+    │  WAIT_TAG   │ (resume parsing)
+    └─────────────┘
+
+
+FRAGMENTATION HANDLING:
+======================
+
+Example: Message split across two recv() calls
+
+First recv():  "8=FIX.4.4|55=MS"
+                                 ▲
+                                 └─ Buffer ends here
+
+    State progression:
+    START ──> WAIT_TAG ──> READ_TAG(8) ──> WAIT_VALUE ──> READ_VALUE("FIX.4.4")
+          ──> DELIM ──> WAIT_TAG ──> READ_TAG(55) ──> WAIT_VALUE 
+          ──> READ_VALUE("MS") ──> SUSPEND
+    
+    Saved state: {
+        state: READ_VALUE,
+        tag: 55,
+        value_start: pointer to "MS",
+        value_length: 2
+    }
+
+Second recv(): "FT|44=123.45|10=020|"
+               ▲
+               └─ Resume from here
+
+    State progression:
+    RESUME(READ_VALUE, tag=55) ──> READ_VALUE("MSFT") ──> DELIM
+          ──> WAIT_TAG ──> READ_TAG(44) ──> ... ──> COMPLETE
+
+
+CHARACTER PROCESSING EXAMPLE:
+=============================
+
+Input: "55=MSFT|"
+
+Position:  0   1   2   3   4   5   6   7
+Character: 5   5   =   M   S   F   T   |
+State:     W   R   R   W   R   R   R   R   D
+           A   E   E   A   E   E   E   E   E
+           I   A   A   I   A   A   A   A   L
+           T   D   D   T   D   D   D   D   I
+           _   _   _   _   _   _   _   _   M
+           T   T   T   V   V   V   V   V
+           A   A   A   A   A   A   A   A
+           G   G   G   L   L   L   L   L
+                       U   U   U   U   U
+                       E   E   E   E   E
+
+Actions:
+  Pos 0: Start reading tag, tag = 5
+  Pos 1: Continue tag, tag = 55
+  Pos 2: Tag complete (55), transition to WAIT_VALUE
+  Pos 3: Start value, mark position
+  Pos 4-6: Continue reading value
+  Pos 7: Delimiter found, store (55, "MSFT"), transition to DELIM
+
+
+PERFORMANCE CHARACTERISTICS:
+============================
+
+Time Complexity:  O(n) - single pass through input
+Space Complexity: O(1) - fixed-size state structure
+
+Per-character cost:
+  - 1 switch statement
+  - 0-2 comparisons
+  - 0-1 arithmetic operations
+  - 0-1 memory writes
+
+Expected throughput: 500K+ messages/second
+Expected latency:    <2 μs per message
+
+
+IMPLEMENTATION PSEUDOCODE:
+=========================
+
+enum State {
+    START, WAIT_TAG, READ_TAG, WAIT_VALUE, 
+    READ_VALUE, DELIM, COMPLETE, ERROR
+};
+
+struct ParserState {
+    State state;
+    int current_tag;
+    const char* value_start;
+    size_t value_length;
+    Field fields[MAX_FIELDS];
+    size_t field_count;
+};
+
+ParseResult parse_char(char c, ParserState& ps) {
+    switch (ps.state) {
+        case WAIT_TAG:
+            if (isdigit(c)) {
+                ps.current_tag = c - '0';
+                ps.state = READ_TAG;
+            }
+            break;
+            
+        case READ_TAG:
+            if (isdigit(c)) {
+                ps.current_tag = ps.current_tag * 10 + (c - '0');
+            } else if (c == '=') {
+                ps.state = WAIT_VALUE;
+            } else {
+                ps.state = ERROR;
+            }
+            break;
+            
+        case WAIT_VALUE:
+            ps.value_start = &c;
+            ps.value_length = 1;
+            ps.state = READ_VALUE;
+            break;
+            
+        case READ_VALUE:
+            if (c == SOH || c == '|') {
+                store_field(ps);
+                ps.state = (ps.current_tag == 10) ? COMPLETE : WAIT_TAG;
+            } else {
+                ps.value_length++;
+            }
+            break;
+    }
+    
+    return get_result(ps);
+}
+
+
+END OF DIAGRAM
+==============
