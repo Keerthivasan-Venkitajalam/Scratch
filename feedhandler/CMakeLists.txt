@@ -43,13 +43,21 @@ add_executable(test_repeating_groups
     src/parser/repeating_group_parser.cpp
 )
 
+# Add FSM parser test executable
+add_executable(test_fsm_parser
+    src/test_fsm_parser.cpp
+    src/parser/fsm_fix_parser.cpp
+)
+
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(parser_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_fast_number_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_repeating_groups PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(test_fsm_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(feedhandler PRIVATE -Wall -Wextra -Werror)
 target_compile_options(parser_benchmark PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_fast_number_parser PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_repeating_groups PRIVATE -Wall -Wextra -Werror)
+target_compile_options(test_fsm_parser PRIVATE -Wall -Wextra -Werror)
 
