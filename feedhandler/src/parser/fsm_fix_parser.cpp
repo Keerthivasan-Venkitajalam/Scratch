@@ -99,12 +99,34 @@ bool FSMFixParser::process_char(char c) {
             
         case State::READ_VALUE:
             if (c == '|' || c == '\x01' || c == '\n' || c == '\r') {
-                // End of value - process the field
+                // End of value - process the field using optimized tag switch
                 value_buffer_[value_length_] = '\0';
                 
-                // Process field based on tag
+                // Optimized tag switch for O(1) field assignment
+                // Compiler will generate a jump table for dense tag ranges
                 switch (current_tag_) {
-                    case 55: // Symbol
+                    case 38: // OrderQty (Quantity) - HOT PATH
+                        tick_builder_.qty = parse_accumulated_int();
+                        tick_builder_.has_qty = true;
+                        break;
+                        
+                    case 44: // Price - HOT PATH
+                        {
+                            double price_double = parse_accumulated_double();
+                            tick_builder_.price = common::double_to_price(price_double);
+                            tick_builder_.has_price = true;
+                        }
+                        break;
+                        
+                    case 54: // Side - HOT PATH
+                        {
+                            int side_value = parse_accumulated_int();
+                            tick_builder_.side = common::fix_side_to_char(side_value);
+                            tick_builder_.has_side = true;
+                        }
+                        break;
+                        
+                    case 55: // Symbol - HOT PATH
                         // Copy symbol to persistent storage
                         if (value_length_ < sizeof(tick_builder_.symbol_storage)) {
                             std::memcpy(tick_builder_.symbol_storage, value_buffer_, value_length_);
@@ -113,31 +135,19 @@ bool FSMFixParser::process_char(char c) {
                         }
                         break;
                         
-                    case 44: // Price
-                        {
-                            double price_double = parse_accumulated_double();
-                            tick_builder_.price = common::double_to_price(price_double);
-                            tick_builder_.has_price = true;
-                        }
-                        break;
-                        
-                    case 38: // Quantity
-                        tick_builder_.qty = parse_accumulated_int();
-                        tick_builder_.has_qty = true;
-                        break;
-                        
-                    case 54: // Side
-                        {
-                            int side_value = parse_accumulated_int();
-                            tick_builder_.side = common::fix_side_to_char(side_value);
-                            tick_builder_.has_side = true;
-                        }
-                        break;
-                        
                     case 10: // Checksum - end of message
                         state_ = State::COMPLETE;
                         current_tag_ = 0;
                         return true; // Message complete
+                        
+                    // Less common tags - grouped together
+                    case 8:  // BeginString
+                    case 9:  // BodyLength
+                    case 35: // MsgType
+                    case 52: // SendingTime
+                    default:
+                        // Ignore unknown/unneeded tags
+                        break;
                 }
                 
                 // Reset for next field
