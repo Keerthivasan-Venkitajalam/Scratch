@@ -3,6 +3,8 @@
 #include <string_view>
 #include <cstdint>
 #include <chrono>
+#include <cstring>
+#include <algorithm>
 
 namespace feedhandler {
 namespace common {
@@ -16,23 +18,84 @@ namespace common {
  * @warning The symbol string_view must not outlive the source buffer
  */
 struct Tick {
-    std::string_view symbol;  ///< Instrument symbol (points into buffer)
+    std::string_view symbol;  ///< Instrument symbol (points into buffer or symbol_storage_)
     int64_t price;           ///< Price in fixed-point (scaled by 10000)
     int32_t qty;             ///< Quantity/size
     char side;               ///< 'B' for Buy/Bid, 'S' for Sell/Ask
     uint64_t timestamp;      ///< Nanoseconds since Unix epoch
     
+    // Optional symbol storage for when we need to own the symbol data
+    char symbol_storage_[64];
+    bool owns_symbol_;  ///< True if symbol points to symbol_storage_
+    
     /**
      * @brief Default constructor - creates invalid tick
      */
-    Tick() : symbol{}, price{0}, qty{0}, side{'\0'}, timestamp{0} {}
+    Tick() : symbol{}, price{0}, qty{0}, side{'\0'}, timestamp{0}, symbol_storage_{}, owns_symbol_(false) {}
     
     /**
      * @brief Constructor with all fields
      */
     Tick(std::string_view sym, int64_t p, int32_t q, char s, uint64_t ts = 0)
         : symbol{sym}, price{p}, qty{q}, side{s}, 
-          timestamp{ts == 0 ? current_timestamp_ns() : ts} {}
+          timestamp{ts == 0 ? current_timestamp_ns() : ts}, symbol_storage_{}, owns_symbol_(false) {}
+    
+    /**
+     * @brief Copy constructor - fixes up symbol pointer if needed
+     */
+    Tick(const Tick& other) 
+        : symbol{other.symbol}, price{other.price}, qty{other.qty}, 
+          side{other.side}, timestamp{other.timestamp}, owns_symbol_{other.owns_symbol_} {
+        if (owns_symbol_) {
+            // Copy the symbol storage and fix the pointer
+            std::memcpy(symbol_storage_, other.symbol_storage_, sizeof(symbol_storage_));
+            symbol = std::string_view(symbol_storage_, other.symbol.size());
+        }
+    }
+    
+    /**
+     * @brief Move constructor - fixes up symbol pointer if needed
+     */
+    Tick(Tick&& other) noexcept
+        : symbol{other.symbol}, price{other.price}, qty{other.qty}, 
+          side{other.side}, timestamp{other.timestamp}, owns_symbol_{other.owns_symbol_} {
+        if (owns_symbol_) {
+            // Copy the symbol storage and fix the pointer
+            std::memcpy(symbol_storage_, other.symbol_storage_, sizeof(symbol_storage_));
+            symbol = std::string_view(symbol_storage_, other.symbol.size());
+        }
+    }
+    
+    /**
+     * @brief Copy assignment operator
+     */
+    Tick& operator=(const Tick& other) {
+        if (this != &other) {
+            symbol = other.symbol;
+            price = other.price;
+            qty = other.qty;
+            side = other.side;
+            timestamp = other.timestamp;
+            owns_symbol_ = other.owns_symbol_;
+            if (owns_symbol_) {
+                std::memcpy(symbol_storage_, other.symbol_storage_, sizeof(symbol_storage_));
+                symbol = std::string_view(symbol_storage_, other.symbol.size());
+            }
+        }
+        return *this;
+    }
+    
+    /**
+     * @brief Copy symbol to internal storage and update string_view
+     * Use this when the source buffer will be invalidated
+     */
+    void copy_symbol(std::string_view src) {
+        size_t len = std::min(src.size(), sizeof(symbol_storage_) - 1);
+        std::memcpy(symbol_storage_, src.data(), len);
+        symbol_storage_[len] = '\0';
+        symbol = std::string_view(symbol_storage_, len);
+        owns_symbol_ = true;  // Mark that we own the symbol
+    }
     
     /**
      * @brief Check if tick is valid
