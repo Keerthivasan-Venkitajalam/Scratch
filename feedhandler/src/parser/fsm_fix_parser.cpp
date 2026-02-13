@@ -39,7 +39,8 @@ size_t FSMFixParser::parse(const char* buffer, size_t length, std::vector<common
             
             if (tick_builder_.is_valid()) {
                 common::Tick tick;
-                tick.symbol = tick_builder_.get_symbol();
+                // Copy symbol to tick's internal storage to avoid dangling reference
+                tick.copy_symbol(tick_builder_.get_symbol());
                 tick.price = tick_builder_.price;
                 tick.qty = tick_builder_.qty;
                 tick.side = tick_builder_.side;
@@ -130,6 +131,7 @@ bool FSMFixParser::process_char(char c) {
                         // Copy symbol to persistent storage
                         if (value_length_ < sizeof(tick_builder_.symbol_storage)) {
                             std::memcpy(tick_builder_.symbol_storage, value_buffer_, value_length_);
+                            tick_builder_.symbol_storage[value_length_] = '\0';  // Null terminate
                             tick_builder_.symbol_length = value_length_;
                             tick_builder_.has_symbol = true;
                         }
