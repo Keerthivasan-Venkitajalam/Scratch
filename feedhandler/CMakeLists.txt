@@ -16,6 +16,19 @@ if(FEED_ASAN)
 	add_link_options(-fsanitize=address)
 endif()
 
+# Fetch Google Test
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# Enable testing
+enable_testing()
+
 add_executable(feedhandler 
     src/main.cpp
     src/net/tcp_client.cpp
@@ -71,3 +84,16 @@ target_compile_options(test_repeating_groups PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_fsm_parser PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_streaming_handler PRIVATE -Wall -Wextra -Werror)
 
+
+# Add GTest unit tests
+add_executable(fsm_parser_tests
+    tests/fsm_parser_tests.cpp
+    src/parser/fsm_fix_parser.cpp
+)
+
+target_include_directories(fsm_parser_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(fsm_parser_tests GTest::gtest_main)
+target_compile_options(fsm_parser_tests PRIVATE -Wall -Wextra -Werror)
+
+include(GoogleTest)
+gtest_discover_tests(fsm_parser_tests)
