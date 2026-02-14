@@ -49,3 +49,27 @@
 //   - Handles integers, decimals, scientific notation
 // Date: Week 2 Day 6
 // ============================================
+
+// ============================================
+// LeetCode 10: Regular Expression Matching
+// Status: COMPLETED ✓
+// Time: O(m*n)  Space: O(m*n)
+// Approach:
+//   - Dynamic Programming solution
+//   - dp[i][j] = true if s[0..i-1] matches p[0..j-1]
+//   - Handle '.' (matches any single char) and '*' (matches 0+ of preceding)
+//   - Star can match zero occurrences or one+ if preceding element matches
+// Date: Week 3 Day 6
+// ============================================
+
+// ============================================
+// LeetCode 151: Reverse Words (OPTIMIZED)
+// Status: COMPLETED ✓
+// Time: O(n)  Space: O(1)
+// Approach:
+//   1. Remove extra spaces in-place using two-pointer technique
+//   2. Reverse entire string
+//   3. Reverse each word individually
+//   - TRUE in-place with no extra string allocation
+// Date: Week 3 Day 6
+// ============================================
