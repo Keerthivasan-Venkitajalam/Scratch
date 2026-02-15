@@ -72,19 +72,20 @@ bool FSMFixParser::process_char(char c) {
             break;
             
         case State::READ_TAG:
-            if (c >= '0' && c <= '9') {
+            // Branch prediction: digit continuation is LIKELY
+            if (__builtin_expect(c >= '0' && c <= '9', 1)) {
                 // Continue reading tag
                 if (tag_length_ < sizeof(tag_buffer_) - 1) {
                     tag_buffer_[tag_length_++] = c;
                 }
-            } else if (c == '=') {
+            } else if (__builtin_expect(c == '=', 1)) {
                 // End of tag, parse it
                 tag_buffer_[tag_length_] = '\0';
                 current_tag_ = parse_accumulated_int();
                 value_length_ = 0;
                 state_ = State::READ_VALUE;
             } else {
-                // Invalid character, reset
+                // Invalid character, reset (UNLIKELY)
                 state_ = State::WAIT_TAG;
                 current_tag_ = 0;
                 tag_length_ = 0;
@@ -99,7 +100,8 @@ bool FSMFixParser::process_char(char c) {
             [[fallthrough]];
             
         case State::READ_VALUE:
-            if (c == '|' || c == '\x01' || c == '\n' || c == '\r') {
+            // Branch prediction: delimiter check is LIKELY (hot path)
+            if (__builtin_expect(c == '|' || c == '\x01' || c == '\n' || c == '\r', 1)) {
                 // End of value - process the field using optimized tag switch
                 value_buffer_[value_length_] = '\0';
                 

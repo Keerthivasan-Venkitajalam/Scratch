@@ -358,7 +358,7 @@ Using GTest:
 
 ---
 
-### **Day 21 — Branch Prediction Awareness**
+### **Day 21 — Branch Prediction Awareness** ✓
 
 **TODO**
 
