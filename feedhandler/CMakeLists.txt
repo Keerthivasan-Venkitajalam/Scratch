@@ -76,6 +76,12 @@ add_executable(test_branch_prediction
     src/parser/fsm_fix_parser.cpp
 )
 
+# Add tick pool test executable
+add_executable(test_tick_pool
+    src/test_tick_pool.cpp
+    src/common/tick_pool.cpp
+)
+
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(parser_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_fast_number_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -83,6 +89,7 @@ target_include_directories(test_repeating_groups PRIVATE ${CMAKE_SOURCE_DIR}/inc
 target_include_directories(test_fsm_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_streaming_handler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_branch_prediction PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(test_tick_pool PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(feedhandler PRIVATE -Wall -Wextra -Werror)
 target_compile_options(parser_benchmark PRIVATE -Wall -Wextra -Werror)
@@ -91,6 +98,7 @@ target_compile_options(test_repeating_groups PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_fsm_parser PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_streaming_handler PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_branch_prediction PRIVATE -Wall -Wextra -Werror)
+target_compile_options(test_tick_pool PRIVATE -Wall -Wextra -Werror)
 
 
 # Add GTest unit tests
