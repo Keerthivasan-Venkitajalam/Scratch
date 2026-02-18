@@ -26,6 +26,14 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Fetch Google Benchmark
+FetchContent_Declare(
+  googlebenchmark
+  URL https://github.com/google/benchmark/archive/refs/tags/v1.8.3.zip
+)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googlebenchmark)
+
 # Enable testing
 enable_testing()
 
@@ -113,3 +121,15 @@ target_compile_options(fsm_parser_tests PRIVATE -Wall -Wextra -Werror)
 
 include(GoogleTest)
 gtest_discover_tests(fsm_parser_tests)
+
+# Add Google Benchmark suite
+add_executable(gbench_parsers
+    benchmarks/bench_parsers.cpp
+    src/parser/naive_fix_parser.cpp
+    src/parser/stringview_fix_parser.cpp
+    src/parser/fsm_fix_parser.cpp
+)
+
+target_include_directories(gbench_parsers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(gbench_parsers benchmark::benchmark)
+target_compile_options(gbench_parsers PRIVATE -Wall -Wextra -Werror)
