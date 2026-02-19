@@ -67,6 +67,47 @@ public:
     State get_state() const { return state_; }
     
     /**
+     * @brief Enable/disable garbage recovery mode
+     * @param enable If true, parser will scan for "8=FIX" to resync after errors
+     */
+    void set_garbage_recovery(bool enable) { garbage_recovery_enabled_ = enable; }
+    
+    /**
+     * @brief Check if garbage recovery is enabled
+     */
+    bool is_garbage_recovery_enabled() const { return garbage_recovery_enabled_; }
+    
+    /**
+     * @brief Get statistics about garbage recovery
+     */
+    struct RecoveryStats {
+        size_t error_count;          // Number of parsing errors encountered
+        size_t recovery_count;       // Number of successful recoveries
+        size_t bytes_skipped;        // Total bytes skipped during recovery
+        
+        RecoveryStats() : error_count(0), recovery_count(0), bytes_skipped(0) {}
+    };
+    
+    const RecoveryStats& get_recovery_stats() const { return recovery_stats_; }
+    void reset_recovery_stats() { recovery_stats_ = RecoveryStats(); }
+    
+    /**
+     * @brief Attempt to recover from parsing error by scanning for "8=FIX"
+     * @param buffer Remaining buffer to scan
+     * @param length Length of remaining buffer
+     * @return Number of bytes to skip to reach potential message start
+     */
+    size_t attempt_garbage_recovery(const char* buffer, size_t length);
+    
+    /**
+     * @brief Check if we're at the start of a FIX message ("8=FIX")
+     * @param buffer Buffer to check
+     * @param length Length of buffer
+     * @return true if buffer starts with "8=FIX"
+     */
+    bool is_fix_message_start(const char* buffer, size_t length) const;
+    
+    /**
      * @brief Benchmark parsing performance with streaming data
      * @param message_count Number of messages to parse
      * @return Parsing time in microseconds
@@ -146,6 +187,22 @@ private:
     // Symbol storage for zero-copy (points into value_buffer_)
     size_t symbol_start_;
     size_t symbol_length_;
+    
+    // Garbage recovery
+    bool garbage_recovery_enabled_;
+    RecoveryStats recovery_stats_;
+    
+    // Recovery state machine
+    enum class RecoveryState {
+        SCANNING,           // Scanning for '8'
+        FOUND_8,           // Found '8', looking for '='
+        FOUND_EQUALS,      // Found '8=', looking for 'F'
+        FOUND_F,           // Found '8=F', looking for 'I'
+        FOUND_FI,          // Found '8=FI', looking for 'X'
+        COMPLETE           // Found '8=FIX', can resume parsing
+    };
+    
+    RecoveryState recovery_state_;
 };
 
 } // namespace parser

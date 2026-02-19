@@ -14,7 +14,9 @@ FSMFixParser::FSMFixParser()
     , value_length_(0)
     , tag_length_(0)
     , symbol_start_(0)
-    , symbol_length_(0) {
+    , symbol_length_(0)
+    , garbage_recovery_enabled_(false)
+    , recovery_state_(RecoveryState::SCANNING) {
 }
 
 void FSMFixParser::reset() {
@@ -24,6 +26,7 @@ void FSMFixParser::reset() {
     tag_length_ = 0;
     symbol_start_ = 0;
     symbol_length_ = 0;
+    recovery_state_ = RecoveryState::SCANNING;
     tick_builder_.reset();
 }
 
@@ -265,6 +268,87 @@ uint64_t FSMFixParser::benchmark_parsing(size_t message_count) {
     std::cout << "  μs/message: " << microseconds_per_message << std::endl;
     
     return microseconds;
+}
+
+bool FSMFixParser::is_fix_message_start(const char* buffer, size_t length) const {
+    // Check for "8=FIX" pattern
+    if (length < 5) return false;
+    
+    return buffer[0] == '8' && 
+           buffer[1] == '=' && 
+           buffer[2] == 'F' && 
+           buffer[3] == 'I' && 
+           buffer[4] == 'X';
+}
+
+size_t FSMFixParser::attempt_garbage_recovery(const char* buffer, size_t length) {
+    // Scan through buffer looking for "8=FIX" pattern
+    recovery_state_ = RecoveryState::SCANNING;
+    
+    for (size_t i = 0; i < length; ++i) {
+        char c = buffer[i];
+        
+        switch (recovery_state_) {
+            case RecoveryState::SCANNING:
+                if (c == '8') {
+                    recovery_state_ = RecoveryState::FOUND_8;
+                }
+                break;
+                
+            case RecoveryState::FOUND_8:
+                if (c == '=') {
+                    recovery_state_ = RecoveryState::FOUND_EQUALS;
+                } else if (c != '8') {
+                    recovery_state_ = RecoveryState::SCANNING;
+                }
+                break;
+                
+            case RecoveryState::FOUND_EQUALS:
+                if (c == 'F') {
+                    recovery_state_ = RecoveryState::FOUND_F;
+                } else if (c == '8') {
+                    recovery_state_ = RecoveryState::FOUND_8;
+                } else {
+                    recovery_state_ = RecoveryState::SCANNING;
+                }
+                break;
+                
+            case RecoveryState::FOUND_F:
+                if (c == 'I') {
+                    recovery_state_ = RecoveryState::FOUND_FI;
+                } else if (c == '8') {
+                    recovery_state_ = RecoveryState::FOUND_8;
+                } else {
+                    recovery_state_ = RecoveryState::SCANNING;
+                }
+                break;
+                
+            case RecoveryState::FOUND_FI:
+                if (c == 'X') {
+                    // Found "8=FIX"! Recovery successful
+                    recovery_state_ = RecoveryState::COMPLETE;
+                    recovery_stats_.recovery_count++;
+                    recovery_stats_.bytes_skipped += (i - 4);  // -4 because we want to start at '8'
+                    
+                    // Return position of '8' (start of "8=FIX")
+                    return (i >= 4) ? (i - 4) : 0;
+                } else if (c == '8') {
+                    recovery_state_ = RecoveryState::FOUND_8;
+                } else {
+                    recovery_state_ = RecoveryState::SCANNING;
+                }
+                break;
+                
+            case RecoveryState::COMPLETE:
+                // Should not reach here
+                break;
+        }
+    }
+    
+    // Did not find "8=FIX" in this buffer
+    // Return length to skip entire buffer
+    recovery_stats_.bytes_skipped += length;
+    return length;
 }
 
 } // namespace parser
