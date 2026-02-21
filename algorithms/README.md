@@ -73,3 +73,27 @@
 //   - TRUE in-place with no extra string allocation
 // Date: Week 3 Day 6
 // ============================================
+
+// ============================================
+// LeetCode 3: Longest Substring Without Repeating Characters
+// Status: COMPLETED ✓
+// Time: O(n)  Space: O(min(n, m)) where m is charset size
+// Approach:
+//   - Sliding window with hash set
+//   - Expand right pointer, contract left when duplicate found
+//   - Optimized version uses array to track last seen position
+//   - Jump start pointer to avoid removing elements one by one
+// Date: Week 4 Day 6
+// ============================================
+
+// ============================================
+// Codeforces 118A: String Task
+// Status: COMPLETED ✓
+// Time: O(n)  Space: O(n)
+// Approach:
+//   - Remove vowels (a, e, i, o, u, y)
+//   - Add dot before each consonant
+//   - Convert to lowercase
+//   - Optimized with lookup table for O(1) vowel check
+// Date: Week 4 Day 6
+// ============================================

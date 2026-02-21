@@ -125,6 +125,22 @@ target_compile_options(test_tick_pool PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_garbage_recovery PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_threaded_feedhandler PRIVATE -Wall -Wextra -Werror)
 
+# Add mock FIX server
+add_executable(mock_fix_server
+    src/mock_fix_server.cpp
+)
+
+# Add final feedhandler demo
+add_executable(feedhandler_demo
+    src/feedhandler_demo.cpp
+    src/parser/fsm_fix_parser.cpp
+    src/net/receive_buffer.cpp
+)
+
+target_include_directories(feedhandler_demo PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(mock_fix_server PRIVATE -Wall -Wextra -Werror)
+target_compile_options(feedhandler_demo PRIVATE -Wall -Wextra -Werror)
+
 
 # Add GTest unit tests
 add_executable(fsm_parser_tests
