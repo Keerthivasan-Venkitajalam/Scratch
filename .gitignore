@@ -1,5 +1,6 @@
 # Build and IDE
 feedhandler/build/
+orderbook/build/
 *.o
 *.obj
 *.exe

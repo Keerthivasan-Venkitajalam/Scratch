@@ -1,131 +1,223 @@
-# FeedHandler
+# Quant Finance Systems - C++ Trading Infrastructure
 
-A high-performance C++ library for parsing FIX protocol market data messages with zero-copy design and minimal memory allocations.
+A high-performance C++ trading infrastructure built from scratch, including market data processing and order book reconstruction for high-frequency trading systems.
 
 ## Overview
 
-FeedHandler is a low-latency parser designed for processing financial market data streams. It implements multiple parsing strategies optimized for different use cases, from simple message parsing to streaming TCP data with fragmentation handling.
+This repository contains a complete trading system stack built over 2 months:
 
-## Key Features
+- **Month 1**: FeedHandler - Zero-copy FIX protocol parser with <1μs latency
+- **Month 2**: OrderBook - Real-time limit order book with <100ns update latency
 
-- **Zero-copy parsing** - Direct buffer references without memory allocation
-- **Multiple parser implementations** - Choose the right parser for your use case
-- **Streaming support** - Handle fragmented TCP streams seamlessly
-- **High throughput** - Optimized for processing millions of messages per second
-- **Type-safe** - Modern C++20 with strong type safety
-- **Extensible** - Easy to add support for additional FIX tags
+## Projects
+
+### 1. FeedHandler (Month 1) ✓
+
+High-performance market data parser for FIX protocol messages.
+
+**Key Features:**
+- Zero-copy parsing with string_view
+- Finite State Machine for streaming TCP data
+- Handles fragmented messages seamlessly
+- 2.46M messages/second throughput
+- Garbage recovery for corrupted data
+- Multi-threaded architecture
+
+**Performance:**
+- Naive parser: 376k msg/s
+- StringView parser: 2.46M msg/s (6.9× faster)
+- FSM parser: 1.18M msg/s + streaming support
+
+[See FeedHandler Documentation →](feedhandler/docs/)
+
+### 2. OrderBook (Month 2) 🚧
+
+Real-time limit order book reconstruction from market data.
+
+**Key Features:**
+- Price-level aggregation
+- O(log n) insert/update/delete operations
+- O(1) best bid/ask queries
+- Market depth visualization
+- Multi-symbol support
+
+**Status:** Week 1 - Foundation (In Progress)
+
+[See OrderBook Documentation →](orderbook/docs/)
 
 ## Building
 
+### FeedHandler
+
 ```bash
 cd feedhandler
-mkdir -p build && cd build
-cmake ..
-make
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j8
+
+# Run tests
+./build/test_fsm_parser
+./build/test_streaming_handler
+
+# Run benchmarks
+./build/gbench_parsers
 ```
 
-### Build Options
+### OrderBook
 
 ```bash
-# Release build (optimized)
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cd orderbook
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j8
 
-# Enable AddressSanitizer for debugging
-cmake -DFEED_ASAN=ON ..
-```
-
-## Usage
-
-### Basic Message Parsing
-
-```cpp
-#include "parser/fsm_fix_parser.hpp"
-
-feedhandler::parser::FSMFixParser parser;
-std::vector<feedhandler::common::Tick> ticks;
-
-const char* message = "8=FIX.4.4|55=MSFT|44=123.45|38=1000|54=1|10=020|\n";
-parser.parse(message, strlen(message), ticks);
-
-for (const auto& tick : ticks) {
-    std::cout << tick.symbol << " $" 
-              << feedhandler::common::price_to_double(tick.price)
-              << " qty:" << tick.qty << std::endl;
-}
-```
-
-### Streaming TCP Data
-
-```cpp
-#include "parser/streaming_fix_handler.hpp"
-
-feedhandler::parser::StreamingFixHandler handler;
-std::vector<feedhandler::common::Tick> ticks;
-
-// Process data as it arrives from network
-handler.process_data(buffer, bytes_received, ticks);
+# Run tests
+./build/price_level_tests
 ```
 
 ## Architecture
 
 ```
-feedhandler/
-├── include/
-│   ├── common/          # Core data structures
-│   ├── net/             # Network utilities
-│   └── parser/          # Parser implementations
-├── src/
-│   ├── net/
-│   ├── parser/
-│   └── main.cpp
-├── docs/                # Technical documentation
-└── tests/               # Test programs
+.
+├── feedhandler/          # Month 1: Market data parser
+│   ├── include/
+│   │   ├── common/       # Tick, pools, flyweight
+│   │   ├── net/          # TCP client, buffers
+│   │   ├── parser/       # FIX parsers (naive, FSM, streaming)
+│   │   └── threading/    # Multi-threaded feedhandler
+│   ├── src/
+│   ├── tests/            # GTest unit tests
+│   ├── benchmarks/       # Google Benchmark suite
+│   └── docs/             # Technical documentation
+│
+├── orderbook/            # Month 2: Order book reconstruction
+│   ├── include/
+│   │   └── orderbook/    # OrderBook, PriceLevel
+│   ├── src/
+│   ├── tests/            # GTest unit tests
+│   └── docs/             # Design documentation
+│
+└── algorithms/           # LeetCode/Codeforces solutions
 ```
 
-## Supported FIX Tags
+## Performance Targets
 
-- Tag 8: BeginString
-- Tag 35: MsgType
-- Tag 38: OrderQty
-- Tag 44: Price
-- Tag 54: Side
-- Tag 55: Symbol
-- Tag 10: CheckSum
+### FeedHandler (Achieved ✓)
+- ✓ 1M+ messages/second single core (achieved 2.46M)
+- ✓ Zero allocations in hot path
+- ✓ Handles TCP fragmentation
+- ✓ Garbage recovery from corruption
 
-## Performance
+### OrderBook (Target)
+- <100ns update latency
+- <10ns best bid/ask query
+- 1M updates/second
+- 100+ concurrent symbols
 
-The library includes multiple parser implementations with different performance characteristics:
+## Technology Stack
 
-- **Naive Parser**: Simple implementation using standard library
-- **String_view Parser**: Zero-allocation parsing with string views
-- **Optimized Parser**: Custom number parsing and optimizations
-- **FSM Parser**: Streaming-capable finite state machine
+- **Language**: C++20
+- **Build**: CMake 3.15+
+- **Testing**: Google Test
+- **Benchmarking**: Google Benchmark
+- **Compiler**: Clang/GCC with -O3 optimization
 
-Run benchmarks to compare performance on your hardware:
+## Key Optimizations
 
-```bash
-./parser_benchmark
-```
+### FeedHandler
+1. Zero-copy parsing with `std::string_view`
+2. Custom `fast_atoi`/`fast_atof` (no exceptions)
+3. Branch prediction hints (`__builtin_expect`)
+4. Object pooling for Tick allocation
+5. Flyweight pattern for memory efficiency
+6. Lock-free message queue for threading
 
-## Testing
-
-```bash
-# Run test programs
-./test_fsm_parser
-./test_streaming_handler
-./test_fast_number_parser
-```
+### OrderBook
+1. `std::map` for O(log n) operations
+2. Price-level aggregation (not individual orders)
+3. Fixed-point arithmetic (no floating point)
+4. Future: Skip list, SIMD, lock-free updates
 
 ## Documentation
 
-See `feedhandler/docs/` for detailed documentation:
+### FeedHandler
+- [Month 1 Completion Summary](feedhandler/docs/month1_completion_summary.md)
+- [FSM Parser Implementation](feedhandler/docs/fsm_parser_implementation.md)
+- [Google Benchmark Report](feedhandler/docs/google_benchmark_report.md)
+- [Garbage Recovery](feedhandler/docs/garbage_recovery.md)
+- [Threading Architecture](feedhandler/docs/threading_architecture.md)
 
-- [FIX Protocol Reference](feedhandler/docs/fix_protocol_reference.md)
-- [Tick Specification](feedhandler/docs/tick_spec.md)
-- [Parser Implementations](feedhandler/docs/)
+### OrderBook
+- [Order Book Design](orderbook/docs/orderbook_design.md)
+
+## Testing
+
+### FeedHandler Tests
+```bash
+cd feedhandler/build
+
+# Unit tests
+./test_fsm_parser
+./test_streaming_handler
+./test_fast_number_parser
+./test_repeating_groups
+./test_garbage_recovery
+./test_tick_pool
+./test_threaded_feedhandler
+
+# Benchmarks
+./gbench_parsers
+./parser_benchmark
+```
+
+### OrderBook Tests
+```bash
+cd orderbook/build
+
+# Unit tests
+./price_level_tests
+```
 
 ## Requirements
 
-- C++20 compatible compiler (clang++ or g++)
+- C++20 compatible compiler (Clang 12+ or GCC 10+)
 - CMake 3.15 or higher
 - POSIX-compliant system (Linux, macOS)
+- Python 3 (for test discovery)
+
+## Learning Path
+
+This project follows a structured 4-month learning plan:
+
+1. **Month 1**: Market data infrastructure (FeedHandler) ✓
+2. **Month 2**: Order book reconstruction (In Progress)
+3. **Month 3**: Strategy backtesting engine
+4. **Month 4**: Risk management & portfolio optimization
+
+Each month builds on the previous, creating a complete trading system from scratch.
+
+## Performance Benchmarks
+
+### FeedHandler Parsers
+
+| Parser | Latency | Throughput | Speedup |
+|--------|---------|------------|---------|
+| Naive | 2,985 ns | 376k msg/s | 1.0× |
+| StringView | 430 ns | 2.46M msg/s | 6.9× |
+| FSM | 924 ns | 1.18M msg/s | 3.2× |
+
+### OrderBook Operations (Target)
+
+| Operation | Target | Complexity |
+|-----------|--------|------------|
+| Insert | <100ns | O(log n) |
+| Update | <50ns | O(log n) |
+| Delete | <100ns | O(log n) |
+| Best bid/ask | <10ns | O(1) |
+| Get depth | <100ns | O(k) |
+
+## License
+
+Educational project - built for learning low-latency systems programming.
+
+## Contact
+
+Built as part of a structured quant finance learning curriculum.
