@@ -38,5 +38,17 @@ target_include_directories(price_level_tests PRIVATE ${CMAKE_SOURCE_DIR}/include
 target_link_libraries(price_level_tests GTest::gtest_main)
 target_compile_options(price_level_tests PRIVATE -Wall -Wextra -Werror)
 
+# Order Book Tests
+add_executable(order_book_tests
+    tests/order_book_tests.cpp
+    src/orderbook/order_book.cpp
+    src/orderbook/price_level.cpp
+)
+
+target_include_directories(order_book_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(order_book_tests GTest::gtest_main)
+target_compile_options(order_book_tests PRIVATE -Wall -Wextra -Werror)
+
 include(GoogleTest)
 gtest_discover_tests(price_level_tests)
+gtest_discover_tests(order_book_tests)
