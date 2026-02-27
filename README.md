@@ -11,7 +11,7 @@ This repository contains a complete trading system stack built over 2 months:
 
 ## Projects
 
-### 1. FeedHandler (Month 1) ✓
+### 1. FeedHandler (Month 1) - COMPLETE
 
 High-performance market data parser for FIX protocol messages.
 
@@ -30,7 +30,7 @@ High-performance market data parser for FIX protocol messages.
 
 [See FeedHandler Documentation →](feedhandler/docs/)
 
-### 2. OrderBook (Month 2) 🚧
+### 2. OrderBook (Month 2) - IN PROGRESS
 
 Real-time limit order book reconstruction from market data.
 
@@ -38,10 +38,13 @@ Real-time limit order book reconstruction from market data.
 - Price-level aggregation
 - O(log n) insert/update/delete operations
 - O(1) best bid/ask queries
-- Market depth visualization
-- Multi-symbol support
+- O(k) market depth queries
+- Multi-symbol support (planned)
 
-**Status:** Week 1 - Foundation (In Progress)
+**Status:** Week 1 Complete - Foundation implemented
+- Day 1-4: Order book operations (add, modify, delete, query)
+- Day 5: Market depth query with comprehensive tests
+- Day 6: Algorithm sprint (LRU Cache, Find Median)
 
 [See OrderBook Documentation →](orderbook/docs/)
 
@@ -100,13 +103,13 @@ cmake --build build -j8
 
 ## Performance Targets
 
-### FeedHandler (Achieved ✓)
-- ✓ 1M+ messages/second single core (achieved 2.46M)
-- ✓ Zero allocations in hot path
-- ✓ Handles TCP fragmentation
-- ✓ Garbage recovery from corruption
+### FeedHandler - ACHIEVED
+- ACHIEVED: 1M+ messages/second single core (achieved 2.46M)
+- ACHIEVED: Zero allocations in hot path
+- ACHIEVED: Handles TCP fragmentation
+- ACHIEVED: Garbage recovery from corruption
 
-### OrderBook (Target)
+### OrderBook - TARGET
 - <100ns update latency
 - <10ns best bid/ask query
 - 1M updates/second
@@ -174,7 +177,27 @@ cd orderbook/build
 
 # Unit tests
 ./price_level_tests
+./order_book_tests
+
+# Market depth demo
+./test_market_depth
 ```
+
+## Algorithm Solutions
+
+The `algorithms/` directory contains LeetCode and Codeforces solutions:
+
+- LeetCode 344: Reverse String
+- LeetCode 151: Reverse Words (in-place)
+- LeetCode 8: String to Integer (atoi)
+- LeetCode 65: Valid Number (FSM)
+- LeetCode 10: Regular Expression Matching (DP)
+- LeetCode 146: LRU Cache (hash map + doubly linked list)
+- LeetCode 295: Find Median from Data Stream (two heaps)
+- LeetCode 3: Longest Substring Without Repeating Characters
+- Codeforces: String Task
+
+All solutions include complexity analysis and test cases.
 
 ## Requirements
 
@@ -187,8 +210,8 @@ cd orderbook/build
 
 This project follows a structured 4-month learning plan:
 
-1. **Month 1**: Market data infrastructure (FeedHandler) ✓
-2. **Month 2**: Order book reconstruction (In Progress)
+1. **Month 1**: Market data infrastructure (FeedHandler) - COMPLETE
+2. **Month 2**: Order book reconstruction - IN PROGRESS (Week 1 complete)
 3. **Month 3**: Strategy backtesting engine
 4. **Month 4**: Risk management & portfolio optimization
 
