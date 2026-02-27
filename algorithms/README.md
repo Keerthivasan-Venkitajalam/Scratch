@@ -75,6 +75,32 @@
 // ============================================
 
 // ============================================
+// LeetCode 146: LRU Cache
+// Status: COMPLETED ✓
+// Time: O(1) get/put  Space: O(capacity)
+// Approach:
+//   - Hash map + Doubly linked list
+//   - Hash map: O(1) lookup by key -> list iterator
+//   - List: O(1) move to front (MRU), O(1) remove from back (LRU)
+//   - Front = most recently used, Back = least recently used
+//   - std::list::splice() for O(1) node movement
+// Date: Month 2 Week 1 Day 6
+// ============================================
+
+// ============================================
+// LeetCode 295: Find Median from Data Stream
+// Status: COMPLETED ✓
+// Time: O(log n) addNum, O(1) findMedian  Space: O(n)
+// Approach:
+//   - Two heaps: max heap (smaller half) + min heap (larger half)
+//   - Max heap stores smaller numbers, min heap stores larger numbers
+//   - Maintain: max_heap.size() >= min_heap.size()
+//   - Median = max_heap.top() OR average of both tops
+//   - Perfect for streaming data with dynamic median queries
+// Date: Month 2 Week 1 Day 6
+// ============================================
+
+// ============================================
 // LeetCode 3: Longest Substring Without Repeating Characters
 // Status: COMPLETED ✓
 // Time: O(n)  Space: O(min(n, m)) where m is charset size

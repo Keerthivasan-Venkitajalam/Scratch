@@ -49,6 +49,16 @@ target_include_directories(order_book_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(order_book_tests GTest::gtest_main)
 target_compile_options(order_book_tests PRIVATE -Wall -Wextra -Werror)
 
+# Market Depth Test
+add_executable(test_market_depth
+    src/test_market_depth.cpp
+    src/orderbook/order_book.cpp
+    src/orderbook/price_level.cpp
+)
+
+target_include_directories(test_market_depth PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_market_depth PRIVATE -Wall -Wextra -Werror)
+
 include(GoogleTest)
 gtest_discover_tests(price_level_tests)
 gtest_discover_tests(order_book_tests)
