@@ -59,6 +59,16 @@ add_executable(test_market_depth
 target_include_directories(test_market_depth PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_options(test_market_depth PRIVATE -Wall -Wextra -Werror)
 
+# Book Printer Demo
+add_executable(book_printer
+    src/orderbook/book_printer.cpp
+    src/orderbook/order_book.cpp
+    src/orderbook/price_level.cpp
+)
+
+target_include_directories(book_printer PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(book_printer PRIVATE -Wall -Wextra -Werror)
+
 include(GoogleTest)
 gtest_discover_tests(price_level_tests)
 gtest_discover_tests(order_book_tests)

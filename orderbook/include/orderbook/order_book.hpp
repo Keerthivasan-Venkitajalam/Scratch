@@ -1,25 +1,12 @@
 #pragma once
 
+#include "price_level.hpp"
 #include <map>
 #include <vector>
 #include <cstdint>
 #include <string_view>
 
 namespace orderbook {
-
-/**
- * @brief Price level in the order book
- * Aggregates all orders at a specific price point
- */
-struct PriceLevel {
-    int64_t price;        // Price in fixed-point (scaled by 10000)
-    int64_t quantity;     // Total quantity at this price
-    uint32_t order_count; // Number of orders at this price
-    
-    PriceLevel() : price(0), quantity(0), order_count(0) {}
-    PriceLevel(int64_t p, int64_t q, uint32_t c) 
-        : price(p), quantity(q), order_count(c) {}
-};
 
 /**
  * @brief Side of the order book
