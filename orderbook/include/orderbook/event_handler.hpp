@@ -93,11 +93,37 @@ public:
      * @brief Get symbol for this handler
      */
     const std::string& get_symbol() const { return symbol_; }
+    
+    /**
+     * @brief Get last processed sequence number
+     */
+    uint64_t get_last_sequence() const { return last_sequence_; }
+    
+    /**
+     * @brief Check if sequence number is valid (no gaps)
+     * @param seq Sequence number to check
+     * @return true if valid, false if gap detected
+     */
+    bool validate_sequence(uint64_t seq);
+    
+    /**
+     * @brief Get gap detection statistics
+     */
+    struct GapStats {
+        uint64_t gaps_detected;
+        uint64_t messages_dropped;
+        
+        GapStats() : gaps_detected(0), messages_dropped(0) {}
+    };
+    
+    const GapStats& get_gap_stats() const { return gap_stats_; }
 
 private:
     std::string symbol_;
     OrderBook order_book_;
     EventStats stats_;
+    uint64_t last_sequence_;
+    GapStats gap_stats_;
     
     /**
      * @brief Validate event before processing

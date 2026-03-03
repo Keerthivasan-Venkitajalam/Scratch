@@ -75,6 +75,30 @@
 // ============================================
 
 // ============================================
+// LeetCode 239: Sliding Window Maximum
+// Status: COMPLETED ✓
+// Time: O(n)  Space: O(k)
+// Approach:
+//   - Use deque to maintain indices in decreasing order
+//   - Front of deque is always maximum in current window
+//   - Remove elements outside window from front
+//   - Remove smaller elements from back
+// Application: Rolling max/min for trading indicators
+// ============================================
+
+// ============================================
+// LeetCode 355: Design Twitter
+// Status: COMPLETED ✓
+// Time: postTweet O(1), getNewsFeed O(N log k)
+// Space: O(N) where N = total tweets
+// Approach:
+//   - Hash maps for user tweets and following relationships
+//   - Priority queue for merging feeds
+//   - Optimized version uses merge k sorted lists
+// Application: Multi-feed aggregation, event merging
+// ============================================
+
+// ============================================
 // LeetCode 146: LRU Cache
 // Status: COMPLETED ✓
 // Time: O(1) get/put  Space: O(capacity)

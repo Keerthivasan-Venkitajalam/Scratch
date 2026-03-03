@@ -81,6 +81,22 @@ add_executable(test_event_handler
 target_include_directories(test_event_handler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_options(test_event_handler PRIVATE -Wall -Wextra -Werror)
 
+# Feed Integration Test
+add_executable(test_feed_integration
+    src/test_feed_integration.cpp
+    src/orderbook/feed_integration.cpp
+    src/orderbook/event_handler.cpp
+    src/orderbook/order_book.cpp
+    src/orderbook/price_level.cpp
+    src/orderbook/book_printer.cpp
+)
+
+target_include_directories(test_feed_integration PRIVATE 
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/../feedhandler/include
+)
+target_compile_options(test_feed_integration PRIVATE -Wall -Wextra -Werror)
+
 include(GoogleTest)
 gtest_discover_tests(price_level_tests)
 gtest_discover_tests(order_book_tests)

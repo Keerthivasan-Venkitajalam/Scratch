@@ -6,7 +6,8 @@ namespace orderbook {
 
 OrderBookHandler::OrderBookHandler(const std::string& symbol)
     : symbol_(symbol)
-    , order_book_(symbol) {
+    , order_book_(symbol)
+    , last_sequence_(0) {
 }
 
 bool OrderBookHandler::on_new_order(const NewOrderEvent& event) {
@@ -90,6 +91,9 @@ bool OrderBookHandler::on_snapshot(const SnapshotEvent& event) {
     // Clear existing book
     order_book_.clear();
     
+    // Reset sequence number to snapshot sequence
+    last_sequence_ = event.sequence_number;
+    
     // Rebuild from snapshot
     // Add all bid levels
     for (const auto& level : event.bids) {
@@ -108,6 +112,15 @@ bool OrderBookHandler::on_snapshot(const SnapshotEvent& event) {
 }
 
 bool OrderBookHandler::process_event(const MarketEvent& event) {
+    // Validate sequence number
+    if (!validate_sequence(event.sequence_number)) {
+        std::cerr << "Sequence gap detected: expected " << (last_sequence_ + 1)
+                  << ", got " << event.sequence_number << std::endl;
+        gap_stats_.gaps_detected++;
+        // In production, would request snapshot here
+        return false;
+    }
+    
     switch (event.type) {
         case EventType::NEW_ORDER:
             return on_new_order(static_cast<const NewOrderEvent&>(event));
@@ -129,6 +142,23 @@ bool OrderBookHandler::process_event(const MarketEvent& event) {
             stats_.errors++;
             return false;
     }
+}
+
+bool OrderBookHandler::validate_sequence(uint64_t seq) {
+    // First message or snapshot resets sequence
+    if (last_sequence_ == 0) {
+        last_sequence_ = seq;
+        return true;
+    }
+    
+    // Check for gap
+    if (seq != last_sequence_ + 1) {
+        gap_stats_.messages_dropped += (seq - last_sequence_ - 1);
+        return false;
+    }
+    
+    last_sequence_ = seq;
+    return true;
 }
 
 bool OrderBookHandler::validate_event(const MarketEvent& event) const {
