@@ -69,6 +69,18 @@ add_executable(book_printer
 target_include_directories(book_printer PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_options(book_printer PRIVATE -Wall -Wextra -Werror)
 
+# Event Handler Test
+add_executable(test_event_handler
+    src/test_event_handler.cpp
+    src/orderbook/event_handler.cpp
+    src/orderbook/order_book.cpp
+    src/orderbook/price_level.cpp
+    src/orderbook/book_printer.cpp
+)
+
+target_include_directories(test_event_handler PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_event_handler PRIVATE -Wall -Wextra -Werror)
+
 include(GoogleTest)
 gtest_discover_tests(price_level_tests)
 gtest_discover_tests(order_book_tests)

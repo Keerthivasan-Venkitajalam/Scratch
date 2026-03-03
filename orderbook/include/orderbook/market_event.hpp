@@ -1,8 +1,10 @@
 #pragma once
 
+#include "orderbook/order_book.hpp"
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace orderbook {
 
@@ -15,14 +17,6 @@ enum class EventType {
     DELETE_ORDER,   // Order removed from book
     TRADE,          // Trade execution
     SNAPSHOT        // Full book snapshot
-};
-
-/**
- * @brief Order side
- */
-enum class Side {
-    BID,  // Buy order
-    ASK   // Sell order
 };
 
 /**
