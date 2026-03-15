@@ -175,3 +175,57 @@ add_executable(gbench_parsers
 target_include_directories(gbench_parsers PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(gbench_parsers benchmark::benchmark)
 target_compile_options(gbench_parsers PRIVATE -Wall -Wextra -Werror)
+
+# Add ultimate performance test suite with all optimizations
+add_executable(ultimate_performance_test
+    benchmarks/ultimate_performance_test.cpp
+    src/parser/simd_fix_parser.cpp
+    src/common/numa_memory_pool.cpp
+    src/threading/ultra_low_latency_queue.cpp
+    src/benchmarks/hardware_profiler.cpp
+    src/common/zero_latency_allocator.cpp
+)
+
+target_include_directories(ultimate_performance_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(ultimate_performance_test benchmark::benchmark)
+
+# Platform-specific optimizations
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    target_compile_options(ultimate_performance_test PRIVATE -Wall -Wextra -Werror -mcpu=native)
+else()
+    target_link_libraries(ultimate_performance_test numa)
+    target_compile_options(ultimate_performance_test PRIVATE -Wall -Wextra -Werror -mavx2 -mfma)
+endif()
+
+# Add SIMD parser test
+add_executable(test_simd_parser
+    src/test_simd_parser.cpp
+    src/parser/simd_fix_parser.cpp
+)
+
+target_include_directories(test_simd_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+# Platform-specific optimizations for SIMD test
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    target_compile_options(test_simd_parser PRIVATE -Wall -Wextra -Werror -mcpu=native)
+else()
+    target_compile_options(test_simd_parser PRIVATE -Wall -Wextra -Werror -mavx2 -mfma)
+endif()
+
+# Add zero latency allocator test
+add_executable(test_zero_latency_allocator
+    src/test_zero_latency_allocator.cpp
+    src/common/zero_latency_allocator.cpp
+)
+
+target_include_directories(test_zero_latency_allocator PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_zero_latency_allocator PRIVATE -Wall -Wextra -Werror)
+
+# Add hardware profiler test
+add_executable(test_hardware_profiler
+    src/test_hardware_profiler.cpp
+    src/benchmarks/hardware_profiler.cpp
+)
+
+target_include_directories(test_hardware_profiler PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_hardware_profiler PRIVATE -Wall -Wextra -Werror)

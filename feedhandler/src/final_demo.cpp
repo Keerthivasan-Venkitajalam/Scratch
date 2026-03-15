@@ -99,8 +99,19 @@ void TradingSystemDemo::demo_threaded_processing() {
     std::cout << "Phase 2: Threaded Processing Architecture" << std::endl;
     std::cout << "----------------------------------------" << std::endl;
     
-    // Create threaded feed handler
-    threading::ThreadedFeedHandler feed_handler;
+    // Create threaded feed handler with callback
+    threading::ThreadedFeedHandler::Config config;
+    config.queue_size = 1000;
+    config.buffer_size = 8192;
+    config.enable_garbage_recovery = true;
+    
+    auto tick_callback = [](const common::Tick& tick) {
+        std::cout << "Processed tick: " << tick.symbol 
+                  << " @ " << common::price_to_double(tick.price)
+                  << " qty=" << tick.qty << std::endl;
+    };
+    
+    threading::ThreadedFeedHandler feed_handler(config, tick_callback);
     
     // Start the system
     std::cout << "Starting threaded feed handler..." << std::endl;
@@ -115,7 +126,7 @@ void TradingSystemDemo::demo_threaded_processing() {
     
     // Feed data to the system
     for (const auto& data : feed_data) {
-        feed_handler.feed_data(data.data(), data.size());
+        feed_handler.inject_data(data.data(), data.size());
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     
@@ -123,10 +134,10 @@ void TradingSystemDemo::demo_threaded_processing() {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Get statistics
-    auto stats = feed_handler.get_statistics();
-    std::cout << "Processed " << stats.messages_processed << " messages" << std::endl;
-    std::cout << "Queue depth: " << stats.current_queue_depth << std::endl;
-    std::cout << "Average latency: " << stats.average_latency_us << " μs" << std::endl;
+    const auto& stats = feed_handler.get_statistics();
+    std::cout << "Processed " << stats.messages_parsed.load() << " messages" << std::endl;
+    std::cout << "Bytes received: " << stats.bytes_received.load() << std::endl;
+    std::cout << "Parse errors: " << stats.parse_errors.load() << std::endl;
     
     // Stop the system
     feed_handler.stop();
