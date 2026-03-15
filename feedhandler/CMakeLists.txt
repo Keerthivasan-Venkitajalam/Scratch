@@ -103,6 +103,13 @@ add_executable(test_threaded_feedhandler
     src/parser/fsm_fix_parser.cpp
 )
 
+# Add final integration demo
+add_executable(final_demo
+    src/final_demo.cpp
+    src/parser/fsm_fix_parser.cpp
+    src/threading/threaded_feedhandler.cpp
+)
+
 target_include_directories(feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(parser_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_fast_number_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -113,6 +120,7 @@ target_include_directories(test_branch_prediction PRIVATE ${CMAKE_SOURCE_DIR}/in
 target_include_directories(test_tick_pool PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_garbage_recovery PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(test_threaded_feedhandler PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(final_demo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(feedhandler PRIVATE -Wall -Wextra -Werror)
 target_compile_options(parser_benchmark PRIVATE -Wall -Wextra -Werror)
@@ -124,6 +132,7 @@ target_compile_options(test_branch_prediction PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_tick_pool PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_garbage_recovery PRIVATE -Wall -Wextra -Werror)
 target_compile_options(test_threaded_feedhandler PRIVATE -Wall -Wextra -Werror)
+target_compile_options(final_demo PRIVATE -Wall -Wextra -Werror)
 
 # Add mock FIX server
 add_executable(mock_fix_server
