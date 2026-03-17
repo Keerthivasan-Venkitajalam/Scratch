@@ -11,3 +11,7 @@ orderbook/build/
 
 # Personal planning files
 Plan & Progress/
+
+# Performance documentation (internal use only)
+feedhandler/PERFORMANCE_SUMMARY.md
+feedhandler/REVOLUTIONARY_IMPROVEMENTS.md
