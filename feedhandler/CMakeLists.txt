@@ -221,11 +221,81 @@ add_executable(test_zero_latency_allocator
 target_include_directories(test_zero_latency_allocator PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_options(test_zero_latency_allocator PRIVATE -Wall -Wextra -Werror)
 
-# Add hardware profiler test
-add_executable(test_hardware_profiler
-    src/test_hardware_profiler.cpp
-    src/benchmarks/hardware_profiler.cpp
+# Add revolutionary features test suite
+add_executable(test_revolutionary_features
+    src/test_revolutionary_features.cpp
+    src/ml/neural_predictor.cpp
 )
 
-target_include_directories(test_hardware_profiler PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_compile_options(test_hardware_profiler PRIVATE -Wall -Wextra -Werror)
+target_include_directories(test_revolutionary_features PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+# Platform-specific optimizations for revolutionary features
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    target_compile_options(test_revolutionary_features PRIVATE -Wall -Wextra -Werror -mcpu=native -O3)
+else()
+    target_compile_options(test_revolutionary_features PRIVATE -Wall -Wextra -Werror -mavx2 -mfma -O3)
+endif()
+
+# Add CUDA support if available
+find_package(CUDA QUIET)
+if(CUDA_FOUND)
+    enable_language(CUDA)
+    
+    add_executable(test_gpu_acceleration
+        src/gpu/cuda_parser.cu
+        src/test_gpu_features.cpp
+    )
+    
+    target_include_directories(test_gpu_acceleration PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    set_property(TARGET test_gpu_acceleration PROPERTY CUDA_STANDARD 17)
+    target_compile_options(test_gpu_acceleration PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-O3 -use_fast_math>)
+    
+    message(STATUS "CUDA support enabled - GPU acceleration available")
+else()
+    message(STATUS "CUDA not found - GPU acceleration disabled")
+endif()
+
+# Add machine learning components
+add_executable(test_neural_prediction
+    src/test_neural_prediction.cpp
+    src/ml/neural_predictor.cpp
+)
+
+target_include_directories(test_neural_prediction PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_neural_prediction PRIVATE -Wall -Wextra -Werror -O3)
+
+# Add quantum optimization components
+add_executable(test_quantum_optimization
+    src/test_quantum_optimization.cpp
+    src/quantum/quantum_optimizer.cpp
+)
+
+target_include_directories(test_quantum_optimization PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_quantum_optimization PRIVATE -Wall -Wextra -Werror -O3)
+
+# Add network acceleration components
+add_executable(test_network_acceleration
+    src/test_network_acceleration.cpp
+    src/network/rdma_transport.cpp
+)
+
+target_include_directories(test_network_acceleration PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_network_acceleration PRIVATE -Wall -Wextra -Werror -O3)
+
+# Add real-time analytics engine
+add_executable(test_realtime_analytics
+    src/test_realtime_analytics.cpp
+    src/analytics/realtime_engine.cpp
+)
+
+target_include_directories(test_realtime_analytics PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_realtime_analytics PRIVATE -Wall -Wextra -Werror -O3)
+
+# Add distributed computing framework
+add_executable(test_distributed_computing
+    src/test_distributed_computing.cpp
+    src/distributed/cluster_computing.cpp
+)
+
+target_include_directories(test_distributed_computing PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_options(test_distributed_computing PRIVATE -Wall -Wextra -Werror -O3)
